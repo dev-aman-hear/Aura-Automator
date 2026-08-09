@@ -14,7 +14,7 @@
     <!-- Top Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand-logo">⚡</div>
+        <img src="../../icons/icon48.png" alt="Aura Automator Logo" width="36" height="36" style="border-radius: 8px;">
         <div class="brand-info">
           <h2>Aura Automator</h2>
           <p>Automate repetitive website tasks</p>
@@ -290,6 +290,20 @@
           <div class="form-group flex-2">
             <label for="taskUrlInput">Target Website URL *</label>
             <input type="url" id="taskUrlInput" placeholder="https://example.com/contact">
+          </div>
+        </div>
+
+        <!-- Continuous Task Loop Control -->
+        <div class="form-row" style="padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+          <div class="form-group flex-1" style="flex-direction: row; align-items: center; justify-content: space-between;">
+            <div>
+              <strong style="font-size: 13px; color: var(--text-main);">🔁 Continuous Task Loop</strong>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">When all steps finish, automatically restart the task from Step 1 continuously.</p>
+            </div>
+            <label class="switch" title="Enable Continuous Loop">
+              <input type="checkbox" id="taskLoopToggle">
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
 

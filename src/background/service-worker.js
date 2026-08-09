@@ -238,6 +238,8 @@ class TaskExecutionManager {
       status: 'running',
       variables: mergedVariables,
       settings: settings,
+      taskLoop: !!task.loopTask,
+      taskLoopInterval: task.loopInterval || 0,
       stepLogs: [],
       startTime: Date.now(),
       waitingForNav: false
@@ -381,6 +383,26 @@ class TaskExecutionManager {
     });
 
     this.broadcastStatus();
+
+    // Continuous Task Level Loop Restart Support
+    if (status === 'completed' && run.taskLoop) {
+      const loopInterval = Math.max(0, parseInt(run.taskLoopInterval || 0, 10));
+      console.log(`🔁 [ServiceWorker] Continuous task loop active. Restarting task "${run.taskName}" from beginning...`);
+
+      run.currentStepIndex = 0;
+      run.status = 'running';
+      run.startTime = Date.now();
+      run.stepLogs = [];
+
+      setTimeout(() => {
+        if (this.activeRun && this.activeRun.taskId === run.taskId && this.activeRun.status === 'running') {
+          this.executeNextStep();
+        }
+      }, loopInterval);
+
+      return;
+    }
+
     this.activeRun = null;
   }
 

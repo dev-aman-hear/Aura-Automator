@@ -414,8 +414,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="form-group">
           <label>Duration (milliseconds)</label>
           <input type="number" class="step-duration-input" value="${step.duration || 2000}" min="100" step="100">
+          <div class="duration-presets-container" style="display: flex; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="30000">30 sec</button>
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="60000">1 min</button>
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="300000">5 min (300k ms)</button>
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="600000">10 min</button>
+          </div>
         </div>
       `;
+      setTimeout(() => {
+        container.querySelectorAll('.duration-preset-btn').forEach(btn => {
+          btn.onclick = () => {
+            const input = container.querySelector('.step-duration-input');
+            if (input) input.value = btn.getAttribute('data-ms');
+          };
+        });
+      }, 0);
     } else if (type === 'wait_text') {
       container.innerHTML = `
         <div class="form-group">
