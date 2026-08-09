@@ -1,0 +1,7 @@
+# Logs and cache
+*.log
+.DS_Store
+
+# Temporary scratch files
+scratch/
+.gemini/

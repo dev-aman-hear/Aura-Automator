@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Automator</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="dark">
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <div class="logo-icon">⚡</div>
+        <div class="brand-text">
+          <h1>Aura Automator</h1>
+          <p>Automate repetitive website tasks</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="openDashboardBtn" class="icon-btn" title="Open Full Dashboard">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Execution Status Bar (Visible when task is running) -->
+    <div id="executionBanner" class="execution-banner hidden">
+      <div class="status-info">
+        <span class="status-indicator pulse"></span>
+        <span id="runningTaskName" class="task-name">Running Task...</span>
+      </div>
+      <div class="progress-container">
+        <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+      </div>
+      <div class="execution-controls">
+        <span id="stepCounter" class="step-counter">Step 1/5</span>
+        <button id="stopTaskBtn" class="stop-btn">Stop</button>
+      </div>
+    </div>
+
+    <!-- Quick Run Section -->
+    <section class="quick-run-card">
+      <label for="taskSelect" class="section-label">Quick Run Task</label>
+      <div class="select-wrapper">
+        <select id="taskSelect">
+          <option value="" disabled selected>Select a task to execute...</option>
+        </select>
+      </div>
+      <button id="runTaskBtn" class="btn btn-primary btn-block">
+        <span class="btn-icon">▶</span> Run Task
+      </button>
+    </section>
+
+    <!-- Quick Action Links -->
+    <section class="quick-actions">
+      <button id="newTaskBtn" class="action-card">
+        <span class="action-icon">➕</span>
+        <span class="action-title">New Task</span>
+      </button>
+      <button id="recordTaskBtn" class="action-card">
+        <span class="action-icon">🔴</span>
+        <span class="action-title">Record Task</span>
+      </button>
+
+      <button id="pickerBtn" class="action-card">
+        <span class="action-icon">🎯</span>
+        <span class="action-title">Element Picker</span>
+      </button>
+      <button id="variablesBtn" class="action-card">
+        <span class="action-icon">🔑</span>
+        <span class="action-title">Variables</span>
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <button id="manageTasksBtn" class="btn-link">📋 Open Full Dashboard</button>
+      <span class="version-tag">v1.0.0</span>
+    </footer>
+  </div>
+
+  <script src="../storage/storage.js"></script>
+  <script src="../utils/messaging.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

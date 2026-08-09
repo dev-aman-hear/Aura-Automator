@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Automator - Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-info">
+          <h2>Aura Automator</h2>
+          <p>Automate repetitive website tasks</p>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearchInput" placeholder="Search tasks, variables, history... (Ctrl+K)">
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="themeToggleBtn" class="icon-btn" title="Toggle Light/Dark Theme">🌙</button>
+        <button id="helpBtn" class="icon-btn" title="Help & Documentation">❓ Help</button>
+        <button id="headerSettingsBtn" class="icon-btn" title="Settings">⚙️ Settings</button>
+      </div>
+    </header>
+
+    <!-- Main Body Layout (Sidebar + Content) -->
+    <div class="app-body">
+      <!-- Sidebar Navigation -->
+      <aside class="app-sidebar">
+        <nav class="nav-menu">
+          <button class="nav-item active" data-tab="tasks">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Tasks</span>
+          </button>
+          <button class="nav-item" data-tab="recorder">
+            <span class="nav-icon">🔴</span>
+            <span class="nav-text">Recorder</span>
+          </button>
+          <button class="nav-item" data-tab="picker-library">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-text">Picked Elements</span>
+          </button>
+          <button class="nav-item" data-tab="variables">
+            <span class="nav-icon">🔑</span>
+            <span class="nav-text">Variables</span>
+          </button>
+          <button class="nav-item" data-tab="history">
+            <span class="nav-icon">📜</span>
+            <span class="nav-text">Execution History</span>
+          </button>
+          <button class="nav-item" data-tab="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Settings & Backup</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="sidebarNewTaskBtn" class="btn btn-accent btn-full">
+            <span>➕</span> New Task
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="app-content">
+        <!-- TASKS TAB -->
+        <section id="tab-tasks" class="tab-pane active">
+          <!-- Metrics Overview Header -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Total Tasks</span>
+              <span id="metricTotalTasks" class="metric-value">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Active Tasks</span>
+              <span id="metricActiveTasks" class="metric-value">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Total Executions</span>
+              <span id="metricTotalRuns" class="metric-value">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Success Rate</span>
+              <span id="metricSuccessRate" class="metric-value">100%</span>
+            </div>
+          </div>
+
+          <!-- Task Action Toolbar -->
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <h3>My Tasks</h3>
+              <span id="taskCountBadge" class="badge">0 tasks</span>
+            </div>
+            <div class="toolbar-right">
+              <button id="newTaskBtn" class="btn btn-primary">
+                <span>➕</span> Create New Task
+              </button>
+            </div>
+          </div>
+
+          <!-- Task Cards Grid -->
+          <div id="tasksGrid" class="tasks-grid">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- RECORDER TAB -->
+        <section id="tab-recorder" class="tab-pane">
+          <div class="pane-header">
+            <h3>🔴 Task Recorder</h3>
+            <p>Record user clicks and inputs on any webpage to generate automation steps automatically.</p>
+          </div>
+
+          <div class="card recorder-control-card">
+            <div class="form-group">
+              <label for="recorderUrlInput">Target Website URL</label>
+              <div class="input-with-button">
+                <input type="url" id="recorderUrlInput" placeholder="https://example.com/contact">
+                <button id="startRecorderBtn" class="btn btn-danger">🔴 Start Recording</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h4>Recorded Steps Preview</h4>
+              <button id="convertToTaskBtn" class="btn btn-primary" disabled>Convert to Task</button>
+            </div>
+            <div id="recordedStepsList" class="recorded-steps-list">
+              <div class="empty-state">
+                <span class="empty-icon">🔴</span>
+                <p>No steps recorded yet. Enter a URL above and click <strong>Start Recording</strong>.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PICKED ELEMENTS LIBRARY TAB -->
+        <section id="tab-picker-library" class="tab-pane">
+          <div class="pane-header">
+            <div class="pane-header-left">
+              <h3>🎯 Picked Elements Library</h3>
+              <p>DOM elements captured using the Visual Element Picker. Copy CSS selectors or convert them into task steps.</p>
+            </div>
+            <div class="button-group" style="display: flex; gap: 8px;">
+              <button id="triggerDashboardPickerBtn" class="btn btn-primary">🎯 Launch Element Picker</button>
+              <button id="clearPickedBtn" class="btn btn-secondary">🗑️ Clear Library</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tag</th>
+                  <th>Target Text / Preview</th>
+                  <th>Captured CSS Selector</th>
+                  <th>Page URL</th>
+                  <th style="width: 140px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pickedElementsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- VARIABLES TAB -->
+        <section id="tab-variables" class="tab-pane">
+          <div class="pane-header">
+            <div class="pane-header-left">
+              <h3>🔑 Global Variables</h3>
+              <p>Reusable placeholder variables that can be used inside task steps as {variable_name}.</p>
+            </div>
+            <button id="addVariableBtn" class="btn btn-primary">➕ Add Variable</button>
+          </div>
+
+          <div class="card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Variable Name</th>
+                  <th>Value</th>
+                  <th>Syntax</th>
+                  <th style="width: 100px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="variablesTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- HISTORY TAB -->
+        <section id="tab-history" class="tab-pane">
+          <div class="pane-header">
+            <div class="pane-header-left">
+              <h3>📜 Execution History</h3>
+              <p>Recent task runs and step execution traces.</p>
+            </div>
+            <button id="clearHistoryBtn" class="btn btn-secondary">🗑️ Clear History</button>
+          </div>
+
+          <div class="card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Task Name</th>
+                  <th>Timestamp</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SETTINGS TAB -->
+        <section id="tab-settings" class="tab-pane">
+          <div class="pane-header">
+            <h3>⚙️ Settings & Data Management</h3>
+            <p>Configure general automation behavior and export/import JSON backups.</p>
+          </div>
+
+          <div class="settings-grid">
+            <div class="card">
+              <h4>Automation Execution Defaults</h4>
+              <div class="form-group">
+                <label for="settingStepTimeout">Step Timeout (ms)</label>
+                <input type="number" id="settingStepTimeout" value="10000" min="1000" step="500">
+              </div>
+              <div class="form-group">
+                <label for="settingRetries">Step Retry Count</label>
+                <input type="number" id="settingRetries" value="3" min="1" max="10">
+              </div>
+              <div class="form-group">
+                <label for="settingRetryDelay">Retry Delay (ms)</label>
+                <input type="number" id="settingRetryDelay" value="1000" min="200" step="100">
+              </div>
+              <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+            </div>
+
+            <div class="card">
+              <h4>📦 Backup & Restore (JSON)</h4>
+              <p class="card-desc">Export all saved tasks, variables, and settings to a JSON file, or restore from a backup.</p>
+              <div class="button-group">
+                <button id="exportBackupBtn" class="btn btn-secondary">📥 Export Backup (JSON)</button>
+                <button id="importBackupBtn" class="btn btn-secondary">📤 Import Backup (JSON)</button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- TASK EDITOR MODAL -->
+  <div id="taskEditorModal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="editorModalTitle">Create Automation Task</h3>
+        <button id="closeEditorModalBtn" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="taskNameInput">Task Name *</label>
+            <input type="text" id="taskNameInput" placeholder="e.g. Contact Form Submission">
+          </div>
+          <div class="form-group flex-2">
+            <label for="taskUrlInput">Target Website URL *</label>
+            <input type="url" id="taskUrlInput" placeholder="https://example.com/contact">
+          </div>
+        </div>
+
+        <div class="section-divider">
+          <h4>Automation Steps</h4>
+          <p>Add visual step actions to execute sequentially.</p>
+        </div>
+
+        <div id="editorStepsList" class="steps-builder-list">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <button id="addStepBtn" class="btn btn-dashed btn-full">➕ Add Action Step</button>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelTaskBtn" class="btn btn-secondary">Cancel</button>
+        <button id="saveTaskBtn" class="btn btn-primary">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY STEP DETAILS MODAL -->
+  <div id="historyDetailModal" class="modal-overlay hidden">
+    <div class="modal-container modal-md">
+      <div class="modal-header">
+        <h3 id="historyDetailTitle">Execution Details</h3>
+        <button id="closeHistoryModalBtn" class="modal-close-btn">✕</button>
+      </div>
+      <div id="historyDetailBody" class="modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button id="closeHistoryModalFooterBtn" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../storage/storage.js"></script>
+  <script src="../utils/variables.js"></script>
+  <script src="../utils/selectors.js"></script>
+  <script src="../utils/messaging.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

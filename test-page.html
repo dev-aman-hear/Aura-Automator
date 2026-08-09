@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Automator - Test Laboratory</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --success: #10b981;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .test-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .test-card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .contenteditable-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 6px;
+      min-height: 60px;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+    }
+
+    .status-box {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+      display: none;
+    }
+
+    .status-box.visible {
+      display: block;
+    }
+
+    .delayed-element {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      background: #334155;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧪 WebTask Automator Test Laboratory</h1>
+      <p>Use this standalone page to test element picking, text typing, React setters, dynamic elements, and task execution.</p>
+    </header>
+
+    <!-- Standard Form Card -->
+    <div class="test-card">
+      <h2>1. Standard Contact Form Test</h2>
+      <form id="testContactForm" onsubmit="event.preventDefault(); handleFormSubmit();">
+        <div class="form-group">
+          <label for="fullname">Full Name (ID: #fullname)</label>
+          <input type="text" id="fullname" name="fullname" placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address (Name: email)</label>
+          <input type="email" id="email" name="email" placeholder="john@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="category">Support Category (Select)</label>
+          <select id="category" name="category">
+            <option value="general">General Query</option>
+            <option value="support">Technical Support</option>
+            <option value="billing">Billing & Payments</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message (Textarea)</label>
+          <textarea id="message" name="message" rows="4" placeholder="Enter text here..."></textarea>
+        </div>
+
+        <div class="form-group" style="flex-direction: row; align-items: center;">
+          <input type="checkbox" id="terms" name="terms">
+          <label for="terms" style="margin-left: 8px;">I accept the Terms & Conditions</label>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn">Submit Form</button>
+      </form>
+
+      <div id="formStatus" class="status-box">
+        ✓ Form submitted successfully! Submitted values will be logged below.
+      </div>
+      <pre id="formOutput" style="margin-top: 10px; font-size: 12px; color: var(--text-muted);"></pre>
+    </div>
+
+    <!-- React/Vue Synthetic Event Tracker Card -->
+    <div class="test-card">
+      <h2>2. React / Synthetic Event State Tracker</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Tests whether native property setters dispatch state changes recognized by modern frameworks.
+      </p>
+      <div class="form-group">
+        <label for="reactInput">React Input Field</label>
+        <input type="text" id="reactInput" data-testid="react-input-field" placeholder="Type here...">
+      </div>
+      <div>
+        <strong>Tracked State Value:</strong> <span id="reactStateValue" style="color: var(--accent); font-weight: bold;">(empty)</span>
+      </div>
+    </div>
+
+    <!-- Password Input Field -->
+    <div class="test-card">
+      <h2>3. Security / Password Recording Test</h2>
+      <div class="form-group">
+        <label for="userPass">Password Field (Triggers Recorder Warning)</label>
+        <input type="password" id="userPass" name="user_password" placeholder="••••••••">
+      </div>
+    </div>
+
+    <!-- ContentEditable Container -->
+    <div class="test-card">
+      <h2>4. ContentEditable Rich Text Field</h2>
+      <div class="form-group">
+        <label>Editable Div Container</label>
+        <div id="editableContainer" class="contenteditable-box" contenteditable="true">
+          Default contenteditable text...
+        </div>
+      </div>
+    </div>
+
+    <!-- Delayed Dynamic Element Test -->
+    <div class="test-card">
+      <h2>5. Dynamic Element (Element Waiting Test)</h2>
+      <p style="font-size: 13px; color: var(--text-muted);">
+        Click the button below to simulate an element appearing after a 2-second delay.
+      </p>
+      <button id="triggerDelayBtn" class="btn" style="margin-top: 8px;">Trigger Delayed Element</button>
+      <div id="delayedTarget" class="delayed-element">
+        🎉 Delayed Element Appeared! (ID: #delayedTarget)
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Handle form submit
+    function handleFormSubmit() {
+      const name = document.getElementById('fullname').value;
+      const email = document.getElementById('email').value;
+      const category = document.getElementById('category').value;
+      const message = document.getElementById('message').value;
+      const terms = document.getElementById('terms').checked;
+
+      const output = { name, email, category, message, terms, submittedAt: new Date().toISOString() };
+      document.getElementById('formOutput').textContent = JSON.stringify(output, null, 2);
+      document.getElementById('formStatus').classList.add('visible');
+    }
+
+    // React state tracker simulation
+    const reactIn = document.getElementById('reactInput');
+    const stateVal = document.getElementById('reactStateValue');
+    ['input', 'change', 'keyup'].forEach(evt => {
+      reactIn.addEventListener(evt, (e) => {
+        stateVal.textContent = e.target.value || '(empty)';
+      });
+    });
+
+    // Trigger delayed element
+    document.getElementById('triggerDelayBtn').onclick = () => {
+      setTimeout(() => {
+        document.getElementById('delayedTarget').style.display = 'block';
+      }, 2000);
+    };
+  </script>
+</body>
+</html>
