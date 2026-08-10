@@ -78,10 +78,10 @@
             description: '🖱️ Step 3: Click get now button #submit-btn'
           },
           {
-            id: 'step_4_wait_90s',
+            id: 'step_4_wait_120s',
             type: 'wait_time',
-            duration: 90000,
-            description: '⏱️ Step 4: Wait for 60 to 90 seconds'
+            duration: 120000,
+            description: '⏱️ Step 4: Wait for 2 minutes (120 seconds)'
           },
           {
             id: 'step_5_server_error_check',

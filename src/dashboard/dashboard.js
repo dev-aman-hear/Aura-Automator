@@ -297,8 +297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (servErr) servErr.value = task ? (task.serverErrorDetection || 'server_connection_error') : 'server_connection_error';
     if (succDel) succDel.value = task ? (task.successDelay || 300000) : 300000;
     if (errDel) errDel.value = task ? (task.errorDelay || 120000) : 120000;
-    if (resTimeout) resTimeout.value = task ? (task.resultTimeout || 90000) : 90000;
-    if (resMinWait) resMinWait.value = task ? (task.resultMinimumWait || 60000) : 60000;
+    if (resTimeout) resTimeout.value = task ? (task.resultTimeout || 120000) : 120000;
+    if (resMinWait) resMinWait.value = task ? (task.resultMinimumWait || 120000) : 120000;
 
     const steps = task && task.steps ? JSON.parse(JSON.stringify(task.steps)) : [
       { id: 'step_1', type: 'navigate', url: task && task.url ? task.url : 'https://example.com', description: 'Open Website URL' }
@@ -859,8 +859,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       task.serverErrorDetection = document.getElementById('taskServerErrorDetection') ? document.getElementById('taskServerErrorDetection').value : 'server_connection_error';
       task.successDelay = document.getElementById('taskSuccessDelay') ? parseInt(document.getElementById('taskSuccessDelay').value, 10) || 300000 : 300000;
       task.errorDelay = document.getElementById('taskErrorDelay') ? parseInt(document.getElementById('taskErrorDelay').value, 10) || 120000 : 120000;
-      task.resultTimeout = document.getElementById('taskResultTimeout') ? parseInt(document.getElementById('taskResultTimeout').value, 10) || 90000 : 90000;
-      task.resultMinimumWait = document.getElementById('taskResultMinWait') ? parseInt(document.getElementById('taskResultMinWait').value, 10) || 60000 : 60000;
+      task.resultTimeout = document.getElementById('taskResultTimeout') ? parseInt(document.getElementById('taskResultTimeout').value, 10) || 120000 : 120000;
+      task.resultMinimumWait = document.getElementById('taskResultMinWait') ? parseInt(document.getElementById('taskResultMinWait').value, 10) || 120000 : 120000;
       task.steps = steps;
       task.loopTask = taskLoopToggle ? taskLoopToggle.checked : false;
       task.loopInterval = taskLoopIntervalInput ? parseInt(taskLoopIntervalInput.value, 10) || 0 : 0;

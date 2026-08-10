@@ -893,19 +893,18 @@
           details.push(`Error element matched: "${sel}"`);
           const elText = el.innerText || el.textContent || '';
           const parsedSec = this.parseCooldownSeconds(elText);
-          if (parsedSec > 0) extractedDelayMs = (parsedSec + 15) * 1000;
+          if (parsedSec > 0) extractedDelayMs = parsedSec * 1000;
           break;
         }
       }
 
       if (!errorFound) {
         if (bodyText.includes('order error') || 
-            bodyText.includes('server connection error') || 
-            bodyText.includes('please wait')) {
+            bodyText.includes('server connection error')) {
           errorFound = true;
           details.push('Error message matched in page text');
           const parsedSec = this.parseCooldownSeconds(bodyText);
-          if (parsedSec > 0) extractedDelayMs = (parsedSec + 15) * 1000;
+          if (parsedSec > 0) extractedDelayMs = parsedSec * 1000;
         }
       }
 

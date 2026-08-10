@@ -329,8 +329,8 @@ class TaskExecutionManager {
       serverErrorDetection: task.serverErrorDetection !== undefined ? task.serverErrorDetection : 'server_connection_error',
       successDelay: task.successDelay || task.loopInterval || 300000,   // 5 minutes
       errorDelay: task.errorDelay || 120000,                             // 2 minutes
-      resultTimeout: task.resultTimeout || 90000,                        // 90 seconds
-      resultMinimumWait: task.resultMinimumWait || 60000,               // 60 seconds
+      resultTimeout: task.resultTimeout || 120000,                      // 2 minutes (120 seconds)
+      resultMinimumWait: task.resultMinimumWait || 120000,             // 2 minutes (120 seconds)
 
       tabId: targetTab.id,
       steps: task.steps || [],
@@ -493,8 +493,9 @@ class TaskExecutionManager {
     const timeoutSec = Math.floor(timeoutMs / 1000);
     this.activeRun.elapsedFormatted = `${this.formatTime(elapsedSec)} / ${this.formatTime(timeoutSec)}`;
     this.activeRun.nextAction = `Waiting 2 min for result (${this.activeRun.elapsedFormatted})`;
+    this.broadcastStatus();
 
-    // Check page for server error, success, or error selectors
+    // Check page for server connection error (critical connection drops)
     const res = await this.sendStepToTab(this.activeRun.tabId, {
       type: 'CHECK_PAGE_RESULT',
       config: {
@@ -519,37 +520,44 @@ class TaskExecutionManager {
         return;
       }
 
-      // 2. Success Result -> Wait 5 minutes (minimum 300,000 ms) -> Restart Step 1 (Loop +1)
-      if (successFound) {
-        const configuredMs = this.activeRun.successDelay || 300000;
-        const delayMs = Math.max(configuredMs, extractedDelayMs || 0, 300000);
-        const delayMins = Math.round(delayMs / 60000);
-        this.logActivity(`Success: ${details || 'Success condition matched'}. Starting Step 1 after ${delayMins} minute(s)`);
-        this.activeRun.state = 'WAITING_SUCCESS_RETRY';
-        this.activeRun.countdownSeconds = Math.round(delayMs / 1000);
-        this.activeRun.countdownFormatted = this.formatTime(this.activeRun.countdownSeconds);
-        this.activeRun.nextAction = `Restarting Step 1 in ${this.activeRun.countdownFormatted}`;
-        this.broadcastStatus();
-        return;
-      }
+      // 2. Evaluate Success/Error ONLY AFTER full 2 minutes (120 seconds) have elapsed
+      if (elapsedMs >= timeoutMs) {
+        if (successFound) {
+          const configuredMs = this.activeRun.successDelay || 300000;
+          const delayMs = Math.max(configuredMs, extractedDelayMs || 0, 300000);
+          const delayMins = Math.round(delayMs / 60000);
+          this.logActivity(`Success: ${details || 'Success condition matched'}. Starting Step 1 after ${delayMins} minute(s)`);
+          this.activeRun.state = 'WAITING_SUCCESS_RETRY';
+          this.activeRun.countdownSeconds = Math.round(delayMs / 1000);
+          this.activeRun.countdownFormatted = this.formatTime(this.activeRun.countdownSeconds);
+          this.activeRun.nextAction = `Restarting Step 1 in ${this.activeRun.countdownFormatted}`;
+          this.broadcastStatus();
+          return;
+        }
 
-      // 3. Error Result -> Use parsed dynamic wait + 15s buffer (if present), else default to errorDelay (120,000 ms = 2 min)
-      if (errorFound) {
-        const delayMs = (extractedDelayMs && extractedDelayMs > 0) ? extractedDelayMs : (this.activeRun.errorDelay || 120000);
-        const delaySecs = Math.round(delayMs / 1000);
-        const logTimeStr = this.formatTime(delaySecs);
-        this.logActivity(`Error: ${details || 'Error condition matched'}. Retrying Step 1 in ${logTimeStr} (Parsed time + 15s buffer)`);
+        if (errorFound) {
+          const delayMs = (extractedDelayMs && extractedDelayMs > 0) ? extractedDelayMs : (this.activeRun.errorDelay || 120000);
+          const delaySecs = Math.round(delayMs / 1000);
+          const logTimeStr = this.formatTime(delaySecs);
+          this.logActivity(`Error: ${details || 'Error condition matched'}. Retrying Step 1 in ${logTimeStr}`);
+          this.activeRun.state = 'WAITING_ERROR_RETRY';
+          this.activeRun.countdownSeconds = delaySecs;
+          this.activeRun.countdownFormatted = this.formatTime(this.activeRun.countdownSeconds);
+          this.activeRun.nextAction = `Retrying Step 1 in ${this.activeRun.countdownFormatted}`;
+          this.broadcastStatus();
+          return;
+        }
+
+        // Default after 2 min wait if neither explicit element matched
+        this.logActivity(`2 min wait complete. Retrying Step 1 after 2 minutes countdown`);
         this.activeRun.state = 'WAITING_ERROR_RETRY';
-        this.activeRun.countdownSeconds = delaySecs;
+        this.activeRun.countdownSeconds = Math.round((this.activeRun.errorDelay || 120000) / 1000);
         this.activeRun.countdownFormatted = this.formatTime(this.activeRun.countdownSeconds);
         this.activeRun.nextAction = `Retrying Step 1 in ${this.activeRun.countdownFormatted}`;
         this.broadcastStatus();
         return;
       }
-    }
-
-    // 4. Timeout reached after 2 min wait -> Re-check or default to 2 min retry
-    if (elapsedMs >= timeoutMs) {
+    } else if (elapsedMs >= timeoutMs) {
       this.logActivity(`2 min wait complete. Retrying Step 1 after 2 minutes countdown`);
       this.activeRun.state = 'WAITING_ERROR_RETRY';
       this.activeRun.countdownSeconds = Math.round((this.activeRun.errorDelay || 120000) / 1000);

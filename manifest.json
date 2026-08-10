@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Aura Automator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automate repetitive website tasks with element picker, recorder, multi-step actions, and variable support.",
   "icons": {
     "16": "icons/icon16.png",
