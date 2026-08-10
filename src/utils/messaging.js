@@ -21,6 +21,7 @@
     // Task Execution
     RUN_TASK: 'RUN_TASK',
     PAUSE_TASK: 'PAUSE_TASK',
+    RESUME_TASK: 'RESUME_TASK',
     STOP_TASK: 'STOP_TASK',
     STEP_STATUS: 'STEP_STATUS',
     TASK_COMPLETED: 'TASK_COMPLETED',
@@ -49,7 +50,14 @@
           }
           chrome.tabs.sendMessage(tabs[0].id, message, (response) => {
             if (chrome.runtime.lastError) {
-              resolve({ success: false, error: chrome.runtime.lastError.message });
+              const errMsg = chrome.runtime.lastError.message || '';
+              const isConnErr = errMsg.includes('Could not establish connection') || errMsg.includes('Receiving end does not exist');
+              resolve({
+                success: false,
+                error: isConnErr
+                  ? 'Could not communicate with active webpage tab (Receiving end does not exist). The page may be loading, closed, or a restricted chrome:// URL.'
+                  : errMsg
+              });
             } else {
               resolve(response || { success: true });
             }
@@ -63,7 +71,14 @@
       return new Promise((resolve) => {
         chrome.tabs.sendMessage(tabId, message, (response) => {
           if (chrome.runtime.lastError) {
-            resolve({ success: false, error: chrome.runtime.lastError.message });
+            const errMsg = chrome.runtime.lastError.message || '';
+            const isConnErr = errMsg.includes('Could not establish connection') || errMsg.includes('Receiving end does not exist');
+            resolve({
+              success: false,
+              error: isConnErr
+                ? 'Could not communicate with webpage content script (Receiving end does not exist). Ensure target page is loaded and not a restricted URL.'
+                : errMsg
+            });
           } else {
             resolve(response || { success: true });
           }
@@ -76,7 +91,14 @@
       return new Promise((resolve) => {
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            resolve({ success: false, error: chrome.runtime.lastError.message });
+            const errMsg = chrome.runtime.lastError.message || '';
+            const isConnErr = errMsg.includes('Could not establish connection') || errMsg.includes('Receiving end does not exist');
+            resolve({
+              success: false,
+              error: isConnErr
+                ? 'Extension background service worker is currently waking up. Please try again.'
+                : errMsg
+            });
           } else {
             resolve(response || { success: true });
           }

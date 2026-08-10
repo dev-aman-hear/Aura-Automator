@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveTaskBtn = document.getElementById('saveTaskBtn');
   const taskNameInput = document.getElementById('taskNameInput');
   const taskUrlInput = document.getElementById('taskUrlInput');
+  const taskLoopToggle = document.getElementById('taskLoopToggle');
+  const taskLoopIntervalInput = document.getElementById('taskLoopIntervalInput');
+  const loopIntervalGroup = document.getElementById('loopIntervalGroup');
   const editorStepsList = document.getElementById('editorStepsList');
   const addStepBtn = document.getElementById('addStepBtn');
 
@@ -196,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <div class="task-card-body">
           <div class="step-summary-badge">
-            ⚙️ ${task.steps ? task.steps.length : 0} Automation Steps
+            ⚙️ ${task.steps ? task.steps.length : 0} Automation Steps ${task.loopTask ? ' | 🔁 Continuous Loop Active' : ''}
           </div>
         </div>
 
@@ -260,8 +263,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     taskNameInput.value = task ? task.name : '';
     taskUrlInput.value = task ? task.url : '';
 
+    if (taskLoopToggle) {
+      taskLoopToggle.checked = !!(task && task.loopTask);
+      if (loopIntervalGroup) {
+        loopIntervalGroup.style.display = taskLoopToggle.checked ? 'block' : 'none';
+      }
+      taskLoopToggle.onchange = () => {
+        if (loopIntervalGroup) {
+          loopIntervalGroup.style.display = taskLoopToggle.checked ? 'block' : 'none';
+        }
+      };
+    }
+    if (taskLoopIntervalInput) {
+      taskLoopIntervalInput.value = task && task.loopInterval !== undefined ? task.loopInterval : 1000;
+    }
+
+    const inSel = document.getElementById('taskInputSelector');
+    const inTxt = document.getElementById('taskInputText');
+    const subSel = document.getElementById('taskSubmitSelector');
+    const succSel = document.getElementById('taskSuccessSelector');
+    const errSel = document.getElementById('taskErrorSelector');
+    const servErr = document.getElementById('taskServerErrorDetection');
+    const succDel = document.getElementById('taskSuccessDelay');
+    const errDel = document.getElementById('taskErrorDelay');
+    const resTimeout = document.getElementById('taskResultTimeout');
+    const resMinWait = document.getElementById('taskResultMinWait');
+
+    if (inSel) inSel.value = task ? (task.inputSelector || '') : '#instagram-link';
+    if (inTxt) inTxt.value = task ? (task.inputText || '') : '{Link01}';
+    if (subSel) subSel.value = task ? (task.submitSelector || '') : '#submit-btn';
+    if (succSel) succSel.value = task ? (task.successSelector || '') : 'div.thanks-page-success';
+    if (errSel) errSel.value = task ? (task.errorSelector || '') : 'div.thanks-page-error';
+    if (servErr) servErr.value = task ? (task.serverErrorDetection || 'server_connection_error') : 'server_connection_error';
+    if (succDel) succDel.value = task ? (task.successDelay || 300000) : 300000;
+    if (errDel) errDel.value = task ? (task.errorDelay || 120000) : 120000;
+    if (resTimeout) resTimeout.value = task ? (task.resultTimeout || 90000) : 90000;
+    if (resMinWait) resMinWait.value = task ? (task.resultMinimumWait || 60000) : 60000;
+
     const steps = task && task.steps ? JSON.parse(JSON.stringify(task.steps)) : [
-      { id: 'step_1', type: 'navigate', url: 'https://example.com', description: 'Open Website URL' }
+      { id: 'step_1', type: 'navigate', url: task && task.url ? task.url : 'https://example.com', description: 'Open Website URL' }
     ];
 
     renderEditorSteps(steps);
@@ -279,11 +319,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     steps.forEach((step, index) => {
       const card = document.createElement('div');
       card.className = 'step-card';
+      const isIfCard = step.type === 'if_condition';
+      const isLoopCard = step.type === 'repeat' || (step.loopMode && step.loopMode !== 'fixed');
+      card.className = `step-card ${isIfCard ? 'if-card' : ''} ${isLoopCard ? 'loop-card' : ''}`;
       card.dataset.index = index;
 
       card.innerHTML = `
         <div class="step-card-header">
-          <span class="step-number-badge">Step ${index + 1}</span>
+          <span class="step-number-badge">${isIfCard ? '⚡ IF / ELSE' : (isLoopCard ? '<span class="loop-anim-icon">🔁</span> LOOP' : `Step ${index + 1}`)}</span>
           <div class="step-controls">
             <button class="btn btn-secondary btn-sm move-up-btn" ${index === 0 ? 'disabled' : ''}>▲</button>
             <button class="btn btn-secondary btn-sm move-down-btn" ${index === steps.length - 1 ? 'disabled' : ''}>▼</button>
@@ -296,6 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="form-group flex-1">
             <label>Action Type</label>
             <select class="step-type-select">
+              <option value="if_condition" ${step.type === 'if_condition' ? 'selected' : ''}>⚡ IF / ELSE Condition Logic</option>
               <option value="navigate" ${step.type === 'navigate' ? 'selected' : ''}>🌐 Open URL</option>
               <option value="click" ${step.type === 'click' ? 'selected' : ''}>🖱️ Click Element</option>
               <option value="double_click" ${step.type === 'double_click' ? 'selected' : ''}>🖱️ Double Click</option>
@@ -345,7 +389,145 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = '';
     const type = step.type;
 
-    if (type === 'navigate') {
+    if (type === 'if_condition') {
+      const condType = step.conditionType || 'element_exists';
+      const thenAct = step.thenAction || 'continue';
+      const elseAct = step.elseAction || 'continue';
+
+      container.innerHTML = `
+        <div class="form-group">
+          <label style="font-weight: 700; color: var(--accent-primary);">⚡ IF Condition Rule</label>
+          <select class="step-condition-type-select">
+            <option value="element_exists" ${condType === 'element_exists' ? 'selected' : ''}>👁️ Target Element Exists / Visible</option>
+            <option value="element_not_exists" ${condType === 'element_not_exists' ? 'selected' : ''}>🚫 Target Element Does Not Exist</option>
+            <option value="text_contains" ${condType === 'text_contains' ? 'selected' : ''}>🔤 Webpage Contains Text</option>
+            <option value="text_not_contains" ${condType === 'text_not_contains' ? 'selected' : ''}>🔤 Webpage Does Not Contain Text</option>
+            <option value="variable_equals" ${condType === 'variable_equals' ? 'selected' : ''}>🔢 Variable Equals Expected Value</option>
+            <option value="variable_not_equals" ${condType === 'variable_not_equals' ? 'selected' : ''}>🔢 Variable Does Not Equal Expected Value</option>
+            <option value="variable_contains" ${condType === 'variable_contains' ? 'selected' : ''}>🔢 Variable Contains Substring</option>
+            <option value="checkbox_checked" ${condType === 'checkbox_checked' ? 'selected' : ''}>☑️ Checkbox / Radio Is Checked</option>
+            <option value="url_contains" ${condType === 'url_contains' ? 'selected' : ''}>🌐 Page URL Contains Substring</option>
+            <option value="server_connection_error" ${condType === 'server_connection_error' ? 'selected' : ''}>🖥️ Server Connection Error / 502 / 503 / Offline</option>
+          </select>
+        </div>
+
+        <div class="condition-target-fields" style="margin-top: 8px;">
+          <!-- Dynamically populated condition inputs -->
+        </div>
+
+        <!-- THEN Branch Box -->
+        <div class="branch-block then-branch">
+          <div class="branch-header">⚡ THEN Branch (If Condition is TRUE)</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Action to Perform</label>
+              <select class="step-then-action-select">
+                <option value="continue" ${thenAct === 'continue' ? 'selected' : ''}>➡️ Continue to Next Step</option>
+                <option value="skip_steps" ${thenAct === 'skip_steps' ? 'selected' : ''}>⏭️ Skip Next N Steps</option>
+                <option value="jump_to_step" ${thenAct === 'jump_to_step' ? 'selected' : ''}>🎯 Jump to Step #</option>
+                <option value="stop_task" ${thenAct === 'stop_task' ? 'selected' : ''}>🛑 Stop Task Execution</option>
+              </select>
+            </div>
+            <div class="form-group then-skip-group flex-1" style="display: ${thenAct === 'skip_steps' ? 'block' : 'none'};">
+              <label>Steps to Skip</label>
+              <input type="number" class="step-then-skip-input" value="${step.thenSkipCount || 1}" min="1" max="100">
+            </div>
+            <div class="form-group then-jump-group flex-1" style="display: ${thenAct === 'jump_to_step' ? 'block' : 'none'};">
+              <label>Target Step Index</label>
+              <input type="number" class="step-then-jump-input" value="${step.thenJumpStep || 1}" min="1" max="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- ELSE Branch Box -->
+        <div class="branch-block else-branch">
+          <div class="branch-header">🔀 ELSE Branch (If Condition is FALSE)</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Action to Perform</label>
+              <select class="step-else-action-select">
+                <option value="continue" ${elseAct === 'continue' ? 'selected' : ''}>➡️ Continue to Next Step</option>
+                <option value="skip_steps" ${elseAct === 'skip_steps' ? 'selected' : ''}>⏭️ Skip Next N Steps</option>
+                <option value="jump_to_step" ${elseAct === 'jump_to_step' ? 'selected' : ''}>🎯 Jump to Step #</option>
+                <option value="stop_task" ${elseAct === 'stop_task' ? 'selected' : ''}>🛑 Stop Task Execution</option>
+              </select>
+            </div>
+            <div class="form-group else-skip-group flex-1" style="display: ${elseAct === 'skip_steps' ? 'block' : 'none'};">
+              <label>Steps to Skip</label>
+              <input type="number" class="step-else-skip-input" value="${step.elseSkipCount || 1}" min="1" max="100">
+            </div>
+            <div class="form-group else-jump-group flex-1" style="display: ${elseAct === 'jump_to_step' ? 'block' : 'none'};">
+              <label>Target Step Index</label>
+              <input type="number" class="step-else-jump-input" value="${step.elseJumpStep || 1}" min="1" max="100">
+            </div>
+          </div>
+        </div>
+      `;
+
+      const condTargetContainer = container.querySelector('.condition-target-fields');
+      const renderCondTargets = () => {
+        const cType = container.querySelector('.step-condition-type-select').value;
+        if (['element_exists', 'element_not_exists', 'checkbox_checked'].includes(cType)) {
+          condTargetContainer.innerHTML = `
+            <div class="form-group">
+              <label>Target Selector / XPath</label>
+              <div class="input-with-button">
+                <input type="text" class="step-selector-input" value="${escapeHtml(step.selector || '')}" placeholder="e.g. #submitBtn or //button[text()='Submit']">
+                <button type="button" class="picker-trigger-btn" data-index="${index}">🎯 Select Element</button>
+              </div>
+            </div>
+          `;
+          const pBtn = condTargetContainer.querySelector('.picker-trigger-btn');
+          if (pBtn) pBtn.onclick = () => triggerElementPicker(index);
+        } else if (['text_contains', 'text_not_contains', 'url_contains'].includes(cType)) {
+          condTargetContainer.innerHTML = `
+            <div class="form-group">
+              <label>Text String to Match</label>
+              <input type="text" class="step-text-input" value="${escapeHtml(step.text || '')}" placeholder="e.g. Success or Thank You">
+            </div>
+            ${cType !== 'url_contains' ? `
+              <div class="form-group">
+                <label>Optional Container Selector</label>
+                <input type="text" class="step-selector-input" value="${escapeHtml(step.selector || '')}" placeholder="Leave blank for entire webpage">
+              </div>
+            ` : ''}
+          `;
+        } else if (['variable_equals', 'variable_not_equals', 'variable_contains'].includes(cType)) {
+          condTargetContainer.innerHTML = `
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Variable / Token</label>
+                <input type="text" class="step-var-val-input" value="${escapeHtml(step.variableValue || '{name}')}" placeholder="e.g. {name} or {status}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Expected Value</label>
+                <input type="text" class="step-expected-input" value="${escapeHtml(step.expectedValue || '')}" placeholder="e.g. Approved or 100">
+              </div>
+            </div>
+          `;
+        }
+      };
+
+      renderCondTargets();
+
+      container.querySelector('.step-condition-type-select').onchange = () => {
+        renderCondTargets();
+      };
+
+      const thenSel = container.querySelector('.step-then-action-select');
+      thenSel.onchange = () => {
+        container.querySelector('.then-skip-group').style.display = thenSel.value === 'skip_steps' ? 'block' : 'none';
+        container.querySelector('.then-jump-group').style.display = thenSel.value === 'jump_to_step' ? 'block' : 'none';
+      };
+
+      const elseSel = container.querySelector('.step-else-action-select');
+      elseSel.onchange = () => {
+        container.querySelector('.else-skip-group').style.display = elseSel.value === 'skip_steps' ? 'block' : 'none';
+        container.querySelector('.else-jump-group').style.display = elseSel.value === 'jump_to_step' ? 'block' : 'none';
+      };
+
+      return;
+    } else if (type === 'navigate') {
       container.innerHTML = `
         <div class="form-group">
           <label>URL to Open</label>
@@ -373,12 +555,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="form-group">
           <label>Text to Enter</label>
-          <textarea class="step-text-input" rows="3" placeholder="Hello {name}, this is my message.">${escapeHtml(step.text || '')}</textarea>
+          <textarea class="step-text-input" rows="3" placeholder="Hello {name}, iteration {loop_index}...">${escapeHtml(step.text || '')}</textarea>
           <div class="variable-pills-container">
             <span class="variable-pill" data-var="{name}">{name}</span>
             <span class="variable-pill" data-var="{email}">{email}</span>
-            <span class="variable-pill" data-var="{phone}">{phone}</span>
-            <span class="variable-pill" data-var="{date}">{date}</span>
+            <span class="variable-pill" data-var="{loop_index}">{loop_index}</span>
+            <span class="variable-pill" data-var="{loop_count}">{loop_count}</span>
           </div>
         </div>
       `;
@@ -415,10 +597,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           <label>Duration (milliseconds)</label>
           <input type="number" class="step-duration-input" value="${step.duration || 2000}" min="100" step="100">
           <div class="duration-presets-container" style="display: flex; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="3000">3 sec</button>
+            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="10000">10 sec</button>
             <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="30000">30 sec</button>
             <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="60000">1 min</button>
-            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="300000">5 min (300k ms)</button>
-            <button type="button" class="btn btn-secondary btn-sm duration-preset-btn" data-ms="600000">10 min</button>
           </div>
         </div>
       `;
@@ -449,41 +631,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     } else if (type === 'repeat') {
+      const mode = step.loopMode || 'fixed';
       container.innerHTML = `
-        <div class="form-group">
-          <label>Target Action Type to Repeat</label>
-          <select class="step-subaction-select">
-            <option value="click" ${step.actionType === 'click' ? 'selected' : ''}>🖱️ Click Element</option>
-            <option value="type" ${step.actionType === 'type' ? 'selected' : ''}>✍️ Type Text</option>
-            <option value="press_key" ${step.actionType === 'press_key' ? 'selected' : ''}>⌨️ Press Key</option>
-            <option value="scroll_page" ${step.actionType === 'scroll_page' ? 'selected' : ''}>📜 Scroll Page</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>🔁 Loop Execution Mode</label>
+            <select class="step-loop-mode-select">
+              <option value="fixed" ${mode === 'fixed' ? 'selected' : ''}>🔢 Fixed Repeat Count (N Times)</option>
+              <option value="while_element" ${mode === 'while_element' ? 'selected' : ''}>👁️ While Target Element Exists</option>
+              <option value="while_text" ${mode === 'while_text' ? 'selected' : ''}>🔤 While Text Appears On Page</option>
+              <option value="for_each" ${mode === 'for_each' ? 'selected' : ''}>📋 For Each Element Matching Selector</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label>Target Action to Repeat</label>
+            <select class="step-subaction-select">
+              <option value="click" ${step.actionType === 'click' ? 'selected' : ''}>🖱️ Click Element</option>
+              <option value="type" ${step.actionType === 'type' ? 'selected' : ''}>✍️ Type Text</option>
+              <option value="press_key" ${step.actionType === 'press_key' ? 'selected' : ''}>⌨️ Press Key</option>
+              <option value="scroll_page" ${step.actionType === 'scroll_page' ? 'selected' : ''}>📜 Scroll Page</option>
+            </select>
+          </div>
         </div>
+
+        <div class="form-row repeat-count-group" style="display: ${mode === 'fixed' ? 'flex' : 'none'}; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group flex-1">
+            <label>🔁 Repeat Count (x)</label>
+            <input type="number" class="step-repeat-input" value="${step.repeat || 1}" min="1" max="500" placeholder="1">
+          </div>
+          <div class="form-group flex-1">
+            <label>⏱️ Interval Between Repeats (ms)</label>
+            <input type="number" class="step-interval-input" value="${step.repeatInterval !== undefined ? step.repeatInterval : 500}" min="0" step="100" placeholder="500">
+          </div>
+        </div>
+
         <div class="form-group">
-          <label>Target CSS Selector</label>
+          <label>Target CSS Selector / XPath</label>
           <div class="input-with-button">
-            <input type="text" class="step-selector-input" value="${escapeHtml(step.selector || '')}" placeholder="e.g. #button">
+            <input type="text" class="step-selector-input" value="${escapeHtml(step.selector || '')}" placeholder="e.g. .list-item button">
             <button type="button" class="picker-trigger-btn" data-index="${index}">🎯 Select Element</button>
           </div>
         </div>
-      `;
-    }
 
-    // Append universal Repeat Loop Controls for all action steps
-    const repeatRow = document.createElement('div');
-    repeatRow.className = 'form-row';
-    repeatRow.style.cssText = 'margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color);';
-    repeatRow.innerHTML = `
-      <div class="form-group flex-1">
-        <label>🔁 Repeat Count (x)</label>
-        <input type="number" class="step-repeat-input" value="${step.repeat || 1}" min="1" max="500" placeholder="1">
-      </div>
-      <div class="form-group flex-1">
-        <label>⏱️ Interval Between Repeats (ms)</label>
-        <input type="number" class="step-interval-input" value="${step.repeatInterval !== undefined ? step.repeatInterval : 500}" min="0" step="100" placeholder="500">
-      </div>
-    `;
-    container.appendChild(repeatRow);
+        <div class="form-group max-loops-group" style="display: ${['while_element', 'while_text'].includes(mode) ? 'block' : 'none'};">
+          <label>Safety Guard Max Iterations Limit</label>
+          <input type="number" class="step-max-loops-input" value="${step.maxLoops || 50}" min="1" max="1000">
+        </div>
+      `;
+
+      container.querySelector('.step-loop-mode-select').onchange = (e) => {
+        const m = e.target.value;
+        const countGrp = container.querySelector('.repeat-count-group');
+        if (countGrp) countGrp.style.display = m === 'fixed' ? 'flex' : 'none';
+        const maxGrp = container.querySelector('.max-loops-group');
+        if (maxGrp) maxGrp.style.display = ['while_element', 'while_text'].includes(m) ? 'block' : 'none';
+      };
+    }
 
     // Attach Picker button event listener
     const pickerBtn = container.querySelector('.picker-trigger-btn');
@@ -515,35 +718,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         type: type
       };
 
-      const urlIn = card.querySelector('.step-url-input');
-      if (urlIn) step.url = urlIn.value;
+      if (type === 'if_condition') {
+        const condTypeSel = card.querySelector('.step-condition-type-select');
+        if (condTypeSel) step.conditionType = condTypeSel.value;
 
-      const selIn = card.querySelector('.step-selector-input');
-      if (selIn) step.selector = selIn.value;
+        const selIn = card.querySelector('.step-selector-input');
+        if (selIn) step.selector = selIn.value;
 
-      const textIn = card.querySelector('.step-text-input');
-      if (textIn) step.text = textIn.value;
+        const textIn = card.querySelector('.step-text-input');
+        if (textIn) step.text = textIn.value;
 
-      const valIn = card.querySelector('.step-value-input');
-      if (valIn) step.value = valIn.value;
+        const varValIn = card.querySelector('.step-var-val-input');
+        if (varValIn) step.variableValue = varValIn.value;
 
-      const keyIn = card.querySelector('.step-key-input');
-      if (keyIn) step.key = keyIn.value;
+        const expIn = card.querySelector('.step-expected-input');
+        if (expIn) step.expectedValue = expIn.value;
 
-      const subAct = card.querySelector('.step-subaction-select');
-      if (subAct) step.actionType = subAct.value;
+        const thenActSel = card.querySelector('.step-then-action-select');
+        if (thenActSel) step.thenAction = thenActSel.value;
 
-      const durIn = card.querySelector('.step-duration-input');
-      if (durIn) step.duration = parseInt(durIn.value, 10) || 1000;
+        const thenSkipIn = card.querySelector('.step-then-skip-input');
+        if (thenSkipIn) step.thenSkipCount = parseInt(thenSkipIn.value, 10) || 1;
 
-      const yIn = card.querySelector('.step-y-input');
-      if (yIn) step.y = parseInt(yIn.value, 10) || 500;
+        const thenJumpIn = card.querySelector('.step-then-jump-input');
+        if (thenJumpIn) step.thenJumpStep = parseInt(thenJumpIn.value, 10) || 1;
 
-      const repIn = card.querySelector('.step-repeat-input');
-      if (repIn) step.repeat = parseInt(repIn.value, 10) || 1;
+        const elseActSel = card.querySelector('.step-else-action-select');
+        if (elseActSel) step.elseAction = elseActSel.value;
 
-      const intIn = card.querySelector('.step-interval-input');
-      if (intIn) step.repeatInterval = parseInt(intIn.value, 10) !== undefined ? parseInt(intIn.value, 10) : 500;
+        const elseSkipIn = card.querySelector('.step-else-skip-input');
+        if (elseSkipIn) step.elseSkipCount = parseInt(elseSkipIn.value, 10) || 1;
+
+        const elseJumpIn = card.querySelector('.step-else-jump-input');
+        if (elseJumpIn) step.elseJumpStep = parseInt(elseJumpIn.value, 10) || 1;
+      } else {
+        const urlIn = card.querySelector('.step-url-input');
+        if (urlIn) step.url = urlIn.value;
+
+        const selIn = card.querySelector('.step-selector-input');
+        if (selIn) step.selector = selIn.value;
+
+        const textIn = card.querySelector('.step-text-input');
+        if (textIn) step.text = textIn.value;
+
+        const valIn = card.querySelector('.step-value-input');
+        if (valIn) step.value = valIn.value;
+
+        const keyIn = card.querySelector('.step-key-input');
+        if (keyIn) step.key = keyIn.value;
+
+        const loopModeSel = card.querySelector('.step-loop-mode-select');
+        if (loopModeSel) step.loopMode = loopModeSel.value;
+
+        const maxLoopsIn = card.querySelector('.step-max-loops-input');
+        if (maxLoopsIn) step.maxLoops = parseInt(maxLoopsIn.value, 10) || 50;
+
+        const subAct = card.querySelector('.step-subaction-select');
+        if (subAct) step.actionType = subAct.value;
+
+        const durIn = card.querySelector('.step-duration-input');
+        if (durIn) step.duration = parseInt(durIn.value, 10) || 1000;
+
+        const yIn = card.querySelector('.step-y-input');
+        if (yIn) step.y = parseInt(yIn.value, 10) || 500;
+
+        const repIn = card.querySelector('.step-repeat-input');
+        if (repIn) step.repeat = parseInt(repIn.value, 10) || 1;
+
+        const intIn = card.querySelector('.step-interval-input');
+        if (intIn) step.repeatInterval = parseInt(intIn.value, 10) !== undefined ? parseInt(intIn.value, 10) : 500;
+      }
 
       steps.push(step);
     });
@@ -606,7 +850,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       task.name = name;
       task.url = url;
+      task.websiteUrl = url;
+      task.inputSelector = document.getElementById('taskInputSelector') ? document.getElementById('taskInputSelector').value : '';
+      task.inputText = document.getElementById('taskInputText') ? document.getElementById('taskInputText').value : '';
+      task.submitSelector = document.getElementById('taskSubmitSelector') ? document.getElementById('taskSubmitSelector').value : '';
+      task.successSelector = document.getElementById('taskSuccessSelector') ? document.getElementById('taskSuccessSelector').value : '';
+      task.errorSelector = document.getElementById('taskErrorSelector') ? document.getElementById('taskErrorSelector').value : '';
+      task.serverErrorDetection = document.getElementById('taskServerErrorDetection') ? document.getElementById('taskServerErrorDetection').value : 'server_connection_error';
+      task.successDelay = document.getElementById('taskSuccessDelay') ? parseInt(document.getElementById('taskSuccessDelay').value, 10) || 300000 : 300000;
+      task.errorDelay = document.getElementById('taskErrorDelay') ? parseInt(document.getElementById('taskErrorDelay').value, 10) || 120000 : 120000;
+      task.resultTimeout = document.getElementById('taskResultTimeout') ? parseInt(document.getElementById('taskResultTimeout').value, 10) || 90000 : 90000;
+      task.resultMinimumWait = document.getElementById('taskResultMinWait') ? parseInt(document.getElementById('taskResultMinWait').value, 10) || 60000 : 60000;
       task.steps = steps;
+      task.loopTask = taskLoopToggle ? taskLoopToggle.checked : false;
+      task.loopInterval = taskLoopIntervalInput ? parseInt(taskLoopIntervalInput.value, 10) || 0 : 0;
 
       await AuraStorage.saveTask(task);
       closeTaskEditor();
@@ -905,22 +1162,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     historyDetailTitle.textContent = `Execution Trace: ${entry.taskName}`;
     historyDetailBody.innerHTML = `
       <div style="margin-bottom: 16px;">
-        <p><strong>Status:</strong> ${entry.status}</p>
-        <p><strong>Time:</strong> ${new Date(entry.timestamp).toLocaleString()}</p>
-        ${entry.error ? `<p style="color: var(--accent-danger);"><strong>Error:</strong> ${escapeHtml(entry.error)}</p>` : ''}
+        <p><strong>Status:</strong> <span class="status-badge ${entry.status}">${entry.status.toUpperCase()}</span></p>
+        <p><strong>Executed At:</strong> ${new Date(entry.timestamp).toLocaleString()}</p>
+        <p><strong>Total Duration:</strong> ${entry.duration ? `${entry.duration} ms` : 'N/A'}</p>
+        ${entry.error ? `<p style="color: var(--accent-danger); margin-top: 6px;"><strong>Error:</strong> ${escapeHtml(entry.error)}</p>` : ''}
       </div>
-      <h4>Step Executions</h4>
-      <div class="steps-builder-list" style="margin-top: 10px;">
-        ${(entry.stepLogs || []).map((log, i) => `
-          <div class="step-card">
-            <div class="step-card-header">
-              <span class="step-number-badge">Step ${i + 1}</span>
-              <span class="status-badge ${log.status}">${log.status}</span>
+      <h4 style="margin-bottom: 10px;">Step Execution Trace</h4>
+      <div class="steps-builder-list">
+        ${(entry.stepLogs || []).map((log, i) => {
+          const isIf = log.type === 'if_condition';
+          const isCondMet = log.conditionMet;
+          const cardClass = isIf ? 'if-card' : (log.type === 'repeat' ? 'loop-card' : '');
+          return `
+            <div class="step-card ${cardClass}">
+              <div class="step-card-header">
+                <span class="step-number-badge">${isIf ? '⚡ IF / ELSE' : `Step ${i + 1}`}</span>
+                <span class="status-badge ${log.status}">${log.status}</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 600;">${escapeHtml(log.description || log.type)}</div>
+              ${isIf && isCondMet !== undefined ? `
+                <div style="margin-top: 6px; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; background: ${isCondMet ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}; color: ${isCondMet ? '#34d399' : '#fbbf24'}; border: 1px solid ${isCondMet ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'};">
+                  ${isCondMet ? '⚡ Evaluation: TRUE (THEN Branch)' : '🔀 Evaluation: FALSE (ELSE Branch)'}
+                  ${log.details ? `<div style="font-weight: 400; font-size: 11px; margin-top: 2px; color: var(--text-main);">${escapeHtml(log.details)}</div>` : ''}
+                </div>
+              ` : ''}
+              ${log.details && !isIf ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${escapeHtml(log.details)}</div>` : ''}
+              ${log.error ? `<div style="color: var(--accent-danger); font-size: 12px; margin-top: 4px;">${escapeHtml(log.error)}</div>` : ''}
             </div>
-            <div style="font-size: 13px;">${escapeHtml(log.description || log.type)}</div>
-            ${log.error ? `<div style="color: var(--accent-danger); font-size: 12px;">${escapeHtml(log.error)}</div>` : ''}
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     `;
     historyDetailModal.classList.remove('hidden');
@@ -985,6 +1255,97 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTasksGrid(e.target.value);
   };
 
+  // --- ACTIVE EXECUTION BANNER CONTROLLER ---
+  async function checkDashboardExecutionState() {
+    try {
+      const banner = document.getElementById('dashboardActiveExecutionBanner');
+      if (!banner) return;
+
+      const response = await Messaging.sendToBackground({ type: MessageTypes.GET_EXECUTION_STATE });
+      if (!response) return; // Do not hide banner on temporary response delay
+      const run = response.activeRun;
+      const isActive = run && run.state && run.state !== 'IDLE';
+
+      if (isActive) {
+        banner.classList.remove('hidden');
+
+        const taskNameEl = document.getElementById('dashRunTaskName');
+        const urlEl = document.getElementById('dashRunWebsiteUrl');
+        if (taskNameEl) taskNameEl.textContent = run.taskName || 'Automation Running';
+        if (urlEl) urlEl.textContent = run.websiteUrl || '';
+
+        const badge = document.getElementById('dashStateBadge');
+        if (badge) {
+          badge.textContent = run.state;
+          if (run.state === 'PAUSED') {
+            badge.style.background = 'rgba(245, 158, 11, 0.2)';
+            badge.style.color = '#fbbf24';
+            badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          } else if (run.state === 'STOPPED') {
+            badge.style.background = 'rgba(239, 68, 68, 0.2)';
+            badge.style.color = '#f87171';
+            badge.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          } else {
+            badge.style.background = 'rgba(139, 92, 246, 0.2)';
+            badge.style.color = '#a78bfa';
+            badge.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+          }
+        }
+
+        const loopBadge = document.getElementById('dashLoopCounterBadge');
+        if (loopBadge) {
+          loopBadge.textContent = `LOOP #${run.loopCounter || run.loopCount || 1}`;
+        }
+
+        const currentStateEl = document.getElementById('dashCurrentStateText');
+        if (currentStateEl) currentStateEl.textContent = run.state;
+
+        const countdownElem = document.getElementById('dashCountdownText');
+        if (countdownElem) {
+          if (['WAITING_SUCCESS_RETRY', 'WAITING_ERROR_RETRY'].includes(run.state)) {
+            countdownElem.textContent = run.countdownFormatted || '00:00';
+          } else if (run.state === 'MONITORING_RESULT') {
+            countdownElem.textContent = run.elapsedFormatted || '00:00 / 01:30';
+          } else if (run.state === 'PAUSED') {
+            countdownElem.textContent = `PAUSED (${run.countdownFormatted || 'Frozen'})`;
+          } else {
+            countdownElem.textContent = '--:--';
+          }
+        }
+
+        const nextActionEl = document.getElementById('dashNextActionText');
+        if (nextActionEl) nextActionEl.textContent = run.nextAction || run.state;
+
+        const consoleBox = document.getElementById('dashActivityLogConsole');
+        if (consoleBox && run.activityLog) {
+          consoleBox.innerHTML = run.activityLog.map(l => `<div>${escapeHtml(l)}</div>`).join('');
+          consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        const pauseBtn = document.getElementById('dashPauseTaskBtn');
+        const resumeBtn = document.getElementById('dashResumeTaskBtn');
+        const stopBtn = document.getElementById('dashStopTaskBtn');
+
+        if (pauseBtn && resumeBtn) {
+          if (run.state === 'PAUSED') {
+            pauseBtn.classList.add('hidden');
+            resumeBtn.classList.remove('hidden');
+          } else if (run.state === 'STOPPED') {
+            pauseBtn.classList.add('hidden');
+            resumeBtn.classList.add('hidden');
+          } else {
+            pauseBtn.classList.remove('hidden');
+            resumeBtn.classList.add('hidden');
+          }
+        }
+      } else if (run && (run.state === 'IDLE' || !run.state)) {
+        banner.classList.add('hidden');
+      }
+    } catch (e) {
+      console.warn('Dashboard state check warning:', e);
+    }
+  }
+
   // --- MESSAGE LISTENERS ---
   function setupMessageListeners() {
     chrome.runtime.onMessage.addListener(async (message) => {
@@ -1005,6 +1366,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRecordedSteps();
       } else if (message.type === MessageTypes.RECORDING_STATUS_CHANGED) {
         checkRecordingState();
+      } else if (message.type === MessageTypes.STEP_STATUS) {
+        loadHistory();
+        checkDashboardExecutionState();
       }
     });
   }
@@ -1017,6 +1381,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         globalSearchInput.focus();
       }
     });
+
+    const dashPauseBtn = document.getElementById('dashPauseTaskBtn');
+    if (dashPauseBtn) {
+      dashPauseBtn.onclick = async () => {
+        await Messaging.sendToBackground({ type: MessageTypes.PAUSE_TASK });
+        checkDashboardExecutionState();
+      };
+    }
+
+    const dashResumeBtn = document.getElementById('dashResumeTaskBtn');
+    if (dashResumeBtn) {
+      dashResumeBtn.onclick = async () => {
+        await Messaging.sendToBackground({ type: MessageTypes.RESUME_TASK });
+        checkDashboardExecutionState();
+      };
+    }
+
+    const dashStopBtn = document.getElementById('dashStopTaskBtn');
+    if (dashStopBtn) {
+      dashStopBtn.onclick = async () => {
+        await Messaging.sendToBackground({ type: MessageTypes.STOP_TASK });
+        checkDashboardExecutionState();
+      };
+    }
   }
 
   function escapeHtml(str) {
@@ -1024,4 +1412,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   await init();
+  setInterval(checkDashboardExecutionState, 1000);
 });

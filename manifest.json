@@ -48,6 +48,9 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "src/storage/storage.js",
+        "src/utils/variables.js",
+        "src/utils/messaging.js",
         "src/dashboard/dashboard.html",
         "test-page.html"
       ],

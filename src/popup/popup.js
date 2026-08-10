@@ -14,8 +14,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const executionBanner = document.getElementById('executionBanner');
   const runningTaskName = document.getElementById('runningTaskName');
+  const stateBadge = document.getElementById('stateBadge');
+  const loopCounterBadge = document.getElementById('loopCounterBadge');
+  const liveTimerBar = document.getElementById('liveTimerBar');
+  const liveTimerText = document.getElementById('liveTimerText');
+  const lastLogSnippet = document.getElementById('lastLogSnippet');
   const progressBar = document.getElementById('progressBar');
-  const stepCounter = document.getElementById('stepCounter');
+  const pauseTaskBtn = document.getElementById('pauseTaskBtn');
+  const resumeTaskBtn = document.getElementById('resumeTaskBtn');
   const stopTaskBtn = document.getElementById('stopTaskBtn');
 
   const store = typeof AuraStorage !== 'undefined' ? AuraStorage : window.AuraStorage;
@@ -48,16 +54,83 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Poll Execution Status
   async function checkExecutionState() {
-    const response = await msg.sendToBackground({ type: MessageTypes.GET_EXECUTION_STATE });
-    if (response && response.activeRun && response.activeRun.status === 'running') {
+    try {
+      const response = await msg.sendToBackground({ type: MessageTypes.GET_EXECUTION_STATE });
+      if (!response) return; // Do not hide banner on temporary response delay
+      
       const run = response.activeRun;
-      executionBanner.classList.remove('hidden');
-      runningTaskName.textContent = run.taskName;
-      const progress = Math.round(((run.currentStepIndex) / run.totalSteps) * 100);
-      progressBar.style.width = `${progress}%`;
-      stepCounter.textContent = `Step ${run.currentStepIndex + 1}/${run.totalSteps}`;
-    } else {
-      executionBanner.classList.add('hidden');
+      const isActive = run && run.state && run.state !== 'IDLE';
+
+      if (isActive) {
+        executionBanner.classList.remove('hidden');
+
+        runningTaskName.textContent = run.taskName || 'Automation Running';
+
+        if (stateBadge) {
+          stateBadge.textContent = run.state || 'RUNNING';
+          if (run.state === 'PAUSED') {
+            stateBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+            stateBadge.style.color = '#fbbf24';
+            stateBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          } else if (run.state === 'STOPPED') {
+            stateBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+            stateBadge.style.color = '#f87171';
+            stateBadge.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          } else {
+            stateBadge.style.background = 'rgba(139, 92, 246, 0.2)';
+            stateBadge.style.color = '#a78bfa';
+            stateBadge.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+          }
+        }
+
+        if (loopCounterBadge) {
+          loopCounterBadge.textContent = `LOOP #${run.loopCounter || run.loopCount || 1}`;
+        }
+
+        if (liveTimerText) {
+          if (['WAITING_SUCCESS_RETRY', 'WAITING_ERROR_RETRY'].includes(run.state)) {
+            liveTimerText.textContent = `Countdown: ${run.countdownFormatted || '00:00'} (Next action: Restarting)`;
+          } else if (run.state === 'MONITORING_RESULT') {
+            liveTimerText.textContent = `Monitoring result (${run.elapsedFormatted || '00:00 / 01:30'})`;
+          } else if (run.state === 'PAUSED') {
+            liveTimerText.textContent = `PAUSED (${run.countdownFormatted || 'Frozen'})`;
+          } else {
+            liveTimerText.textContent = run.nextAction || `Status: ${run.state}`;
+          }
+        }
+
+        if (lastLogSnippet && run.activityLog && run.activityLog.length > 0) {
+          lastLogSnippet.textContent = run.activityLog[run.activityLog.length - 1];
+        }
+
+        // Toggle Pause / Resume buttons
+        if (pauseTaskBtn && resumeTaskBtn) {
+          if (run.state === 'PAUSED') {
+            pauseTaskBtn.classList.add('hidden');
+            resumeTaskBtn.classList.remove('hidden');
+          } else if (run.state === 'STOPPED') {
+            pauseTaskBtn.classList.add('hidden');
+            resumeTaskBtn.classList.add('hidden');
+          } else {
+            pauseTaskBtn.classList.remove('hidden');
+            resumeTaskBtn.classList.add('hidden');
+          }
+        }
+
+        // Calculate progress bar
+        let progress = 25;
+        if (run.state === 'NAVIGATING') progress = 25;
+        else if (run.state === 'ENTERING_DATA') progress = 50;
+        else if (run.state === 'SUBMITTING') progress = 75;
+        else if (run.state === 'MONITORING_RESULT') progress = 90;
+        else if (['WAITING_SUCCESS_RETRY', 'WAITING_ERROR_RETRY'].includes(run.state)) progress = 100;
+        if (progressBar) progressBar.style.width = `${progress}%`;
+
+      } else if (run && (run.state === 'IDLE' || !run.state)) {
+        executionBanner.classList.add('hidden');
+      }
+    } catch (err) {
+      console.warn('Error in checkExecutionState:', err);
     }
   }
 
@@ -83,11 +156,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Stop Active Task
-  stopTaskBtn.addEventListener('click', async () => {
-    await msg.sendToBackground({ type: MessageTypes.STOP_TASK });
-    checkExecutionState();
-  });
+  // Pause Task Button
+  if (pauseTaskBtn) {
+    pauseTaskBtn.addEventListener('click', async () => {
+      await msg.sendToBackground({ type: MessageTypes.PAUSE_TASK });
+      checkExecutionState();
+    });
+  }
+
+  // Resume Task Button
+  if (resumeTaskBtn) {
+    resumeTaskBtn.addEventListener('click', async () => {
+      await msg.sendToBackground({ type: MessageTypes.RESUME_TASK });
+      checkExecutionState();
+    });
+  }
+
+  // Stop Active Task Button
+  if (stopTaskBtn) {
+    stopTaskBtn.addEventListener('click', async () => {
+      await msg.sendToBackground({ type: MessageTypes.STOP_TASK });
+      checkExecutionState();
+    });
+  }
 
   // Navigation Links - Open App directly to specified tab
   function openDashboardTab(tabName = 'tasks') {
@@ -127,4 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadTasks();
   await checkExecutionState();
+
+  // Lightweight 1-second polling timer while popup is open
+  setInterval(checkExecutionState, 1000);
 });

@@ -27,13 +27,23 @@
       <div class="status-info">
         <span class="status-indicator pulse"></span>
         <span id="runningTaskName" class="task-name">Running Task...</span>
+        <span id="stateBadge" class="loop-counter-badge" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.4);">STARTING_LOOP</span>
+        <span id="loopCounterBadge" class="loop-counter-badge">LOOP #1</span>
+      </div>
+      <div id="liveTimerBar" class="live-timer-bar">
+        <span class="timer-icon">⏳</span>
+        <span id="liveTimerText" class="timer-text">Next action: Starting Loop #1</span>
+      </div>
+      <div id="lastLogSnippet" class="log-snippet" style="font-family: monospace; font-size: 10px; color: #94a3b8; margin: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        [00:00:00] Initializing automation engine...
       </div>
       <div class="progress-container">
         <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
       </div>
-      <div class="execution-controls">
-        <span id="stepCounter" class="step-counter">Step 1/5</span>
-        <button id="stopTaskBtn" class="stop-btn">Stop</button>
+      <div class="execution-controls" style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px;">
+        <button id="pauseTaskBtn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">⏸️ Pause</button>
+        <button id="resumeTaskBtn" class="btn btn-primary btn-sm hidden" style="font-size: 11px; padding: 4px 10px;">▶️ Resume</button>
+        <button id="stopTaskBtn" class="stop-btn" style="font-size: 11px; padding: 4px 10px;">🛑 Stop</button>
       </div>
     </div>
 

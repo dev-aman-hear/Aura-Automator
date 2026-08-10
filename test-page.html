@@ -231,6 +231,29 @@
     </div>
   </div>
 
+    <!-- Looping & IF/ELSE Logic Test Laboratory -->
+    <div class="test-card" style="border-color: rgba(139, 92, 246, 0.4);">
+      <h2 style="color: #c084fc;">6. ⚡ IF/ELSE Logic & 🔁 Looping Test Laboratory</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Use these interactive elements to test conditional branching rules (element presence, text matching, checkbox state) and repeat loop actions.
+      </p>
+      
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+        <button id="counterBtn" class="btn" style="background: #8b5cf6;">Clicked: <span id="clickCount">0</span> times</button>
+        <button id="toggleCondBtn" class="btn btn-secondary">Toggle Conditional Element</button>
+        <button id="toggleTextBtn" class="btn btn-secondary">Toggle Success Text</button>
+      </div>
+
+      <div id="conditionalBox" style="display: none; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; font-weight: 600; color: #34d399;">
+        ⚡ Conditional Target Element Visible (#conditionalBox)
+      </div>
+
+      <div id="textTargetBox" style="margin-top: 10px; font-size: 13px; color: var(--text-muted);">
+        Status Text: <strong id="statusTextVal" style="color: var(--accent);">Pending Verification</strong>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Handle form submit
     function handleFormSubmit() {
@@ -259,6 +282,24 @@
       setTimeout(() => {
         document.getElementById('delayedTarget').style.display = 'block';
       }, 2000);
+    };
+
+    // Looping & IF/ELSE Test Handlers
+    let count = 0;
+    document.getElementById('counterBtn').onclick = () => {
+      count++;
+      document.getElementById('clickCount').textContent = count;
+    };
+
+    document.getElementById('toggleCondBtn').onclick = () => {
+      const box = document.getElementById('conditionalBox');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    };
+
+    document.getElementById('toggleTextBtn').onclick = () => {
+      const txt = document.getElementById('statusTextVal');
+      txt.textContent = txt.textContent.includes('Success') ? 'Pending Verification' : 'Operation Success Completed';
+      txt.style.color = txt.textContent.includes('Success') ? '#34d399' : '#3b82f6';
     };
   </script>
 </body>

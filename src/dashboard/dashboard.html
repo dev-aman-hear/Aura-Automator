@@ -97,6 +97,53 @@
             </div>
           </div>
 
+          <!-- Active Execution State Machine Banner -->
+          <div id="dashboardActiveExecutionBanner" class="card hidden" style="margin-bottom: 20px; border-left: 4px solid var(--accent-primary); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98));">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="status-indicator pulse" style="background: #10b981;"></span>
+                <div>
+                  <h4 id="dashRunTaskName" style="margin: 0; font-size: 15px; color: var(--text-main);">Running Task Name</h4>
+                  <p id="dashRunWebsiteUrl" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">https://example.com</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="dashStateBadge" class="badge" style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.4);">STARTING_LOOP</span>
+                <span id="dashLoopCounterBadge" class="badge" style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">LOOP #1</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: var(--radius-md);">
+              <div>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Current State</span>
+                <div id="dashCurrentStateText" style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 2px;">STARTING_LOOP</div>
+              </div>
+              <div>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Countdown / Timer</span>
+                <div id="dashCountdownText" style="font-size: 14px; font-weight: 700; color: #60a5fa; margin-top: 2px;">00:00</div>
+              </div>
+              <div>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Next Action</span>
+                <div id="dashNextActionText" style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-top: 2px;">Opening website</div>
+              </div>
+            </div>
+
+            <!-- Activity Log Stream Box -->
+            <div style="margin-bottom: 14px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Live Activity Log</div>
+              <div id="dashActivityLogConsole" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #cbd5e1; background: #090d16; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px; height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                <div>[00:00:00] Initializing automation engine...</div>
+              </div>
+            </div>
+
+            <!-- Action Control Buttons -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button id="dashPauseTaskBtn" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">⏸️ Pause Automation</button>
+              <button id="dashResumeTaskBtn" class="btn btn-primary btn-sm hidden" style="padding: 6px 14px;">▶️ Resume Automation</button>
+              <button id="dashStopTaskBtn" class="btn btn-danger btn-sm" style="padding: 6px 14px;">🛑 Stop Automation</button>
+            </div>
+          </div>
+
           <!-- Task Action Toolbar -->
           <div class="toolbar">
             <div class="toolbar-left">
@@ -294,7 +341,7 @@
         </div>
 
         <!-- Continuous Task Loop Control -->
-        <div class="form-row" style="padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+        <div class="form-row" style="padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); flex-direction: column; gap: 8px;">
           <div class="form-group flex-1" style="flex-direction: row; align-items: center; justify-content: space-between;">
             <div>
               <strong style="font-size: 13px; color: var(--text-main);">🔁 Continuous Task Loop</strong>
@@ -304,6 +351,64 @@
               <input type="checkbox" id="taskLoopToggle">
               <span class="slider"></span>
             </label>
+          </div>
+          <div id="loopIntervalGroup" class="form-group" style="display: none; margin-top: 4px;">
+            <label for="taskLoopIntervalInput" style="font-size: 11px; color: var(--text-muted);">Loop Delay Between Runs (ms)</label>
+            <input type="number" id="taskLoopIntervalInput" value="1000" min="0" step="500" placeholder="1000">
+          </div>
+        </div>
+
+        <!-- Loop Automation Engine Workflow Config -->
+        <div style="margin-top: 14px; padding: 14px; background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+          <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--accent-primary);">⚡ Workflow Automation Selectors & Timers</h4>
+          
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group flex-1">
+              <label for="taskInputSelector">Input Selector</label>
+              <input type="text" id="taskInputSelector" placeholder="e.g. #instagram-link or input[name='url']">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskInputText">Input Text / Variable</label>
+              <input type="text" id="taskInputText" placeholder="e.g. {Link01}">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskSubmitSelector">Submit Button Selector</label>
+              <input type="text" id="taskSubmitSelector" placeholder="e.g. #submit-btn or button[type='submit']">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group flex-1">
+              <label for="taskSuccessSelector">Success Element Selector</label>
+              <input type="text" id="taskSuccessSelector" placeholder="e.g. div.thanks-page-success">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskErrorSelector">Error Element Selector</label>
+              <input type="text" id="taskErrorSelector" placeholder="e.g. div.thanks-page-error">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskServerErrorDetection">Server Error Keyword/Selector</label>
+              <input type="text" id="taskServerErrorDetection" value="server_connection_error" placeholder="e.g. server_connection_error">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="taskSuccessDelay">Success Delay (ms)</label>
+              <input type="number" id="taskSuccessDelay" value="300000" min="1000" step="5000" placeholder="300000 (5 mins)">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskErrorDelay">Error Delay (ms)</label>
+              <input type="number" id="taskErrorDelay" value="120000" min="1000" step="5000" placeholder="120000 (2 mins)">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskResultTimeout">Result Timeout (ms)</label>
+              <input type="number" id="taskResultTimeout" value="90000" min="1000" step="1000" placeholder="90000 (90 secs)">
+            </div>
+            <div class="form-group flex-1">
+              <label for="taskResultMinWait">Min Wait (ms)</label>
+              <input type="number" id="taskResultMinWait" value="60000" min="1000" step="1000" placeholder="60000 (60 secs)">
+            </div>
           </div>
         </div>
 

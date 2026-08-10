@@ -12,7 +12,8 @@
       VARIABLES: 'aura_variables',
       SETTINGS: 'aura_settings',
       HISTORY: 'aura_history',
-      PICKED_ELEMENTS: 'aura_picked_elements'
+      PICKED_ELEMENTS: 'aura_picked_elements',
+      ACTIVE_RUN: 'aura_active_run'
     },
 
     DEFAULT_SETTINGS: {
@@ -28,10 +29,96 @@
       name: 'Aman',
       email: 'user@example.com',
       phone: '9876543210',
-      subject: 'General Inquiry'
+      subject: 'General Inquiry',
+      Link01: 'https://www.instagram.com/reel/YOUR_REEL_ID/'
     },
 
     DEFAULT_TASKS: [
+      {
+        id: 'task_zefame_ig_views',
+        name: 'Zefame Free Instagram Views Automation',
+        url: 'https://zefame.com/en/free-instagram-views',
+        websiteUrl: 'https://zefame.com/en/free-instagram-views',
+        inputSelector: '#instagram-link',
+        inputText: '{Link01}',
+        submitSelector: '#submit-btn',
+        successSelector: 'p.thanks-page-body, div.thanks-page-success',
+        errorSelector: 'div.thanks-page-error, #error-message',
+        serverErrorDetection: 'server_connection_error',
+        successDelay: 300000,
+        errorDelay: 120000,
+        resultTimeout: 120000,
+        resultMinimumWait: 120000,
+        enabled: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        loopTask: true,
+        loopInterval: 300000,
+        variables: {
+          Link01: 'https://www.instagram.com/reel/YOUR_REEL_ID/'
+        },
+        steps: [
+          {
+            id: 'step_1_nav',
+            type: 'navigate',
+            url: 'https://zefame.com/en/free-instagram-views',
+            description: '🌐 Step 1: Open https://zefame.com/en/free-instagram-views'
+          },
+          {
+            id: 'step_2_type_link',
+            type: 'type',
+            selector: '#instagram-link',
+            text: '{Link01}',
+            description: '✍️ Step 2: Paste link {Link01} into #instagram-link'
+          },
+          {
+            id: 'step_3_click_submit',
+            type: 'click',
+            selector: '#submit-btn',
+            description: '🖱️ Step 3: Click get now button #submit-btn'
+          },
+          {
+            id: 'step_4_wait_90s',
+            type: 'wait_time',
+            duration: 90000,
+            description: '⏱️ Step 4: Wait for 60 to 90 seconds'
+          },
+          {
+            id: 'step_5_server_error_check',
+            type: 'if_condition',
+            conditionType: 'server_connection_error',
+            thenAction: 'jump_to_step',
+            thenJumpStep: 1,
+            elseAction: 'continue',
+            description: '⚡ IF Server Error appears -> Retry from Step 1 immediately'
+          },
+          {
+            id: 'step_6_error_box_check',
+            type: 'if_condition',
+            conditionType: 'element_exists',
+            selector: 'div.thanks-page-error',
+            thenAction: 'jump_to_step',
+            thenJumpStep: 1,
+            elseAction: 'continue',
+            description: '⚡ ELSE IF div.thanks-page-error appears -> Grab time + 10s & retry from Step 1'
+          },
+          {
+            id: 'step_7_success_box_check',
+            type: 'if_condition',
+            conditionType: 'element_exists',
+            selector: 'div.thanks-page-success',
+            thenAction: 'continue',
+            elseAction: 'continue',
+            description: '⚡ IF div.thanks-page-success appears -> Rerun loop from Step 1 after 5 minutes'
+          },
+          {
+            id: 'step_8_success_wait_5m',
+            type: 'wait_time',
+            duration: 300000,
+            description: '⏱️ Rerun loop from Step 1 after exactly 5 minutes (300000 ms)'
+          }
+        ]
+      },
       {
         id: 'task_sample_1',
         name: 'Sample Contact Form Test',
@@ -255,6 +342,18 @@
 
     async clearPickedElements() {
       return await this.set(this.KEYS.PICKED_ELEMENTS, []);
+    },
+
+    async getActiveRun() {
+      return await this.get(this.KEYS.ACTIVE_RUN, null);
+    },
+
+    async saveActiveRun(activeRun) {
+      return await this.set(this.KEYS.ACTIVE_RUN, activeRun);
+    },
+
+    async clearActiveRun() {
+      return await this.set(this.KEYS.ACTIVE_RUN, null);
     },
 
     async exportData() {

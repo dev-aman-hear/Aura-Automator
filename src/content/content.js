@@ -58,6 +58,18 @@
           }
           break;
 
+        case 'CHECK_PAGE_RESULT':
+          if (window.WebTaskAutomationEngine) {
+            window.WebTaskAutomationEngine
+              .checkPageResult(message.config || {})
+              .then(result => sendResponse(result))
+              .catch(err => sendResponse({ success: false, error: err.message }));
+            return true;
+          } else {
+            sendResponse({ success: false, error: 'AutomationEngine not loaded' });
+          }
+          break;
+
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
           break;

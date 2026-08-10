@@ -756,3 +756,131 @@ input:checked + .slider:before {
   display: block;
   margin-bottom: 12px;
 }
+
+/* ==========================================================================
+   LOOPING & IF/ELSE ENHANCEMENTS & ANIMATIONS
+   ========================================================================== */
+
+/* Keyframe Animations */
+@keyframes spinLoop {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulseGlowPurple {
+  0%, 100% { box-shadow: 0 0 12px rgba(139, 92, 246, 0.3), inset 0 0 8px rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.7); }
+  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.7), inset 0 0 15px rgba(139, 92, 246, 0.3); border-color: rgba(168, 85, 247, 1); }
+}
+
+@keyframes pulseGlowEmerald {
+  0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.7); }
+  50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.7); border-color: rgba(52, 211, 153, 1); }
+}
+
+@keyframes shimmerGlow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Animated Loop Badge */
+.loop-anim-icon {
+  display: inline-block;
+  animation: spinLoop 2.5s linear infinite;
+}
+
+/* Loop Step Card Styling */
+.step-card.loop-card {
+  border: 1px solid rgba(139, 92, 246, 0.5) !important;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(88, 28, 135, 0.15)) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-card.loop-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #8b5cf6, #c084fc);
+}
+
+.step-card.loop-card .step-number-badge {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* IF / ELSE Condition Card Styling */
+.step-card.if-card {
+  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(6, 78, 59, 0.15)) !important;
+  position: relative;
+}
+
+.step-card.if-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #10b981, #f59e0b);
+}
+
+.step-card.if-card .step-number-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* IF / ELSE Branch Containers inside Card */
+.branch-block {
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.branch-block.then-branch {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.branch-block.else-branch {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.branch-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.branch-block.then-branch .branch-header {
+  color: #34d399;
+}
+
+.branch-block.else-branch .branch-header {
+  color: #fbbf24;
+}
+
+/* Continuous Task Loop Active Pulse Banner */
+.continuous-loop-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  color: #c084fc;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  animation: pulseGlowPurple 3s infinite ease-in-out;
+}
+
